@@ -1,31 +1,79 @@
-import { useMachine } from "@xstate/react";
 import { createBrowserInspector } from "@statelyai/inspect";
-import { useEffect, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { stationAttendeeMachine } from "./machines/stationAttendeeMachine";
+import { Actor, createActor } from "xstate";
 
-function App() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { inspect } = createBrowserInspector({
-    iframe: iframeRef.current,
-  });
+const input = {
+  attendee: { userId: "me" },
+  executor: { userId: "me", executorType: "SELF" as const },
+  stationId: "123",
+};
 
-  const [state, send] = useMachine(stationAttendeeMachine, {
-    input: {
-      attendee: { userId: "me" },
-      executor: { userId: "me", executorType: "SELF" },
-      stationId: "123",
-    },
-    inspect,
-  });
+const { inspect } = createBrowserInspector();
+
+const ActorContext = createContext<Actor<typeof stationAttendeeMachine> | null>(
+  null
+);
+
+function Component() {
+  const actor = useContext(ActorContext);
+  const [isReady, setReady] = useState(false);
 
   useEffect(() => {
-    console.log(state);
-    if (state.value === "ready") {
-      send({ type: "register" });
+    if (actor) {
+      const unsub = actor.subscribe((snapshot) => {
+        if (snapshot.value === "ready") {
+          setReady(true);
+        }
+        if (snapshot.status === "done") {
+          setReady(false);
+        }
+      });
+      return () => unsub.unsubscribe();
     }
-  }, [state, send]);
+  }, [actor]);
 
-  return <>{JSON.stringify(state.value)}</>;
+  const handleRegister = useCallback(() => {
+    actor?.send({ type: "register" });
+  }, [actor]);
+
+  const handleUnregister = useCallback(() => {
+    actor?.send({ type: "unregister" });
+  }, [actor]);
+
+  return (
+    <>
+      <button disabled={!isReady} onClick={handleRegister}>
+        register
+      </button>
+      <button disabled={!isReady} onClick={handleUnregister}>
+        unregister
+      </button>
+    </>
+  );
+}
+
+function App() {
+  const [actor, setActor] = useState<Actor<
+    typeof stationAttendeeMachine
+  > | null>(null);
+  const handleCreateActor = useCallback(() => {
+    const actor = createActor(stationAttendeeMachine, { input, inspect });
+    setActor(actor);
+    actor.start();
+  }, []);
+  return (
+    <ActorContext.Provider value={actor}>
+      <button onClick={handleCreateActor}>create actor</button>
+      <Component />
+    </ActorContext.Provider>
+  );
 }
 
 export default App;
