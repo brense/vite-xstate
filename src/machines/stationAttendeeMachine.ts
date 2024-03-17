@@ -154,8 +154,8 @@ export const stationAttendeeMachine = setup({
       context: { currentStation, attendees },
     }) => attendees.length > 0 && Boolean(currentStation?.isContactPerson),
     isHostNotRegisteredAtStation: ({
-      context: { stationId, guests, currentStation },
-    }) => guests.length > 0 && Boolean(currentStation?.stationId !== stationId),
+      context: { stationId, currentStation },
+    }) => false/* TODO: check executorType... */ && Boolean(currentStation?.stationId !== stationId),
     isFirstAtStation: ({ context: { attendees } }) => attendees.length === 0,
     stationHasAlarm: ({ context: { teasecSiteId } }) => Boolean(teasecSiteId),
     hasErrors: ({ context: { error } }) => error !== "NONE",
