@@ -1,134 +1,35 @@
-import { assign, fromPromise, setup } from "xstate";
-
-const fetchCurrentStationAndGuests = fromPromise<
-  {
-    currentStation: { stationId: string; isContactPerson: boolean } | null;
-    guests: Array<{ name: string }>;
-  },
-  { userId: string }
->(({ input: { userId } }) => {
-  return new Promise((resolve) => {
-    console.log("fetching current station and guests for", userId);
-    setTimeout(() => {
-      resolve({ currentStation: null, guests: [] });
-    }, 500);
-  });
-});
-
-const fetchStationAndAttendees = fromPromise<
-  {
-    stationId: string;
-    teasecSiteId?: string;
-    attendees: Array<{ userId: string }>;
-  },
-  { stationId: string }
->(({ input: { stationId } }) => {
-  return new Promise((resolve) => {
-    console.log("fetching attendees for station", stationId);
-    setTimeout(() => {
-      resolve({ stationId, teasecSiteId: "AAA", attendees: [] });
-    }, 500);
-  });
-});
-
-const toggleAlarm = fromPromise<
-  unknown,
-  { teasecSiteId: string; action: "ARM" | "DISARM" }
->(({ input: { action, teasecSiteId } }) => {
-  return new Promise<void>((resolve, reject) => {
-    try {
-      console.log(action, teasecSiteId);
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-    } catch (e) {
-      reject({ action });
-    }
-  });
-});
-
-const sendNotifications = fromPromise(() => {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
-});
-
-const commitTransactions = fromPromise<
-  { eventType: "register" | "unregister" },
-  { session: unknown; eventType: "register" | "unregister" }
->(({ input: { eventType } }) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ eventType });
-    }, 1000);
-  });
-});
-
-type ErrorStates =
-  | "NONE"
-  | "FETCH_CURRENT_STATION_FAILED"
-  | "FETCH_ATTENDEES_FAILED"
-  | "ALREADY_REGISTERED"
-  | "NOT_REGISTERED"
-  | "HAS_GUESTS"
-  | "HOST_NOT_AT_STATION"
-  | "STATION_NOT_EMPTY"
-  | "WRITING_LOG_ENTRIES_FAILED"
-  | "ARM_ALARM_FAILED"
-  | "DISARM_ALARM_FAILED"
-  | "SEND_NOTIFICATIONS_FAILED";
-
-type ExecutorType = "SELF" | "GUESTS_HOST" | "OPERATOR";
-
-function createRegisterLogEntry() {
-  console.log("REGISTERED ENTRY");
-}
-
-function createUnregisterLogEntry() {
-  console.log("UNREGISTERED ENTRY");
-}
-
-function createContactPersonLogEntry() {
-  console.log("BECAME_CONTACT_PERSON ENTRY");
-}
-
-function endSession({
-  context: { session },
-}: {
-  context: { session: unknown };
-}) {
-  console.log("ending session", session);
-  // TODO: session.endSession()
-}
-
-function abortTransaction({
-  context: { session },
-}: {
-  context: { session: unknown };
-}) {
-  console.log("aborting transaction", session);
-  // TODO: session.abortTransaction()
-}
+import { assign, setup } from "xstate";
+import { Attendee, ErrorStates, Executor } from "../types";
+import { fetchCurrentStationAndGuests } from "../actors/fetchCurrentStationAndGuests";
+import { fetchStationAndAttendees } from "../actors/fetchStationAndAttendees";
+import { toggleAlarm } from "../actors/toggleAlarm";
+import { sendNotifications } from "../actors/sendNotifications";
+import { commitTransactions } from "../actors/commitTransactions";
+import {
+  createContactPersonLogEntry,
+  createRegisterLogEntry,
+  createUnregisterLogEntry,
+  endSession,
+  abortTransaction,
+} from "../actions";
 
 export const stationAttendeeMachine = setup({
   types: {
     context: {} as {
-      attendee: { userId: string };
-      executor: { userId: string; executorType: ExecutorType };
+      attendee: Attendee;
+      executor: Executor;
       stationId: string;
       teasecSiteId?: string;
       error: ErrorStates;
       session: unknown;
       currentStation: { stationId: string; isContactPerson: boolean } | null;
       guests: Array<{ name: string }>;
-      attendees: Array<{ userId: string }>;
+      attendees: Attendee[];
       becameContactPerson: boolean;
     },
     input: {} as {
-      attendee: { userId: string };
-      executor: { userId: string; executorType: ExecutorType };
+      attendee: Attendee;
+      executor: Executor;
       stationId: string;
     },
     output: {} as {
@@ -333,7 +234,7 @@ export const stationAttendeeMachine = setup({
           eventType: event.type as "register",
         }),
         onDone: [
-          { guard: "stationHasAlarm", target: "toggleAlarm" },
+          { guard: "stationHasAlarm", target: "togglingAlarm" },
           { target: "notifying" },
         ],
         onError: {
@@ -349,7 +250,7 @@ export const stationAttendeeMachine = setup({
       },
       exit: [{ type: "endSession" }],
     },
-    toggleAlarm: {
+    togglingAlarm: {
       invoke: {
         src: "toggleAlarm",
         input: ({
