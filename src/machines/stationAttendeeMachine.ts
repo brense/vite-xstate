@@ -9,7 +9,9 @@ const fetchCurrentStationAndGuests = fromPromise<
 >(({ input: { userId } }) => {
   return new Promise((resolve) => {
     console.log("fetching current station and guests for", userId);
-    resolve({ currentStation: null, guests: [] });
+    setTimeout(() => {
+      resolve({ currentStation: null, guests: [] });
+    }, 500);
   });
 });
 
@@ -23,7 +25,9 @@ const fetchStationAndAttendees = fromPromise<
 >(({ input: { stationId } }) => {
   return new Promise((resolve) => {
     console.log("fetching attendees for station", stationId);
-    resolve({ stationId, teasecSiteId: "AAA", attendees: [] });
+    setTimeout(() => {
+      resolve({ stationId, teasecSiteId: "AAA", attendees: [] });
+    }, 500);
   });
 });
 
@@ -34,7 +38,9 @@ const toggleAlarm = fromPromise<
   return new Promise<void>((resolve, reject) => {
     try {
       console.log(action, teasecSiteId);
-      resolve();
+      setTimeout(() => {
+        resolve();
+      }, 1000);
     } catch (e) {
       reject({ action });
     }
@@ -43,7 +49,9 @@ const toggleAlarm = fromPromise<
 
 const sendNotifications = fromPromise(() => {
   return new Promise<void>((resolve) => {
-    resolve();
+    setTimeout(() => {
+      resolve();
+    }, 1000);
   });
 });
 
@@ -52,7 +60,9 @@ const commitTransactions = fromPromise<
   { session: unknown; eventType: "register" | "unregister" }
 >(({ input: { eventType } }) => {
   return new Promise((resolve) => {
-    resolve({ eventType });
+    setTimeout(() => {
+      resolve({ eventType });
+    }, 1000);
   });
 });
 
@@ -71,10 +81,6 @@ type ErrorStates =
   | "SEND_NOTIFICATIONS_FAILED";
 
 type ExecutorType = "SELF" | "GUESTS_HOST" | "OPERATOR";
-
-function setError(_: unknown, { errorType }: { errorType: ErrorStates }) {
-  assign({ error: errorType });
-}
 
 function createRegisterLogEntry() {
   console.log("REGISTERED ENTRY");
@@ -138,7 +144,7 @@ export const stationAttendeeMachine = setup({
     commitTransactions,
   },
   actions: {
-    setError,
+    setError: assign((_, { error }: { error: ErrorStates }) => ({ error })),
     createRegisterLogEntry,
     createContactPersonLogEntry: assign(() => {
       createContactPersonLogEntry();
@@ -151,8 +157,8 @@ export const stationAttendeeMachine = setup({
   guards: {
     isAlreadyRegistered: ({ context: { currentStation } }) =>
       currentStation !== null,
-    isNotRegisteredAtStation: ({ context: { currentStation } }) =>
-      currentStation === null,
+    isNotRegisteredAtStation: ({ context: { currentStation, stationId } }) =>
+      currentStation?.stationId !== stationId,
     hasGuests: ({ context: { guests } }) => guests.length > 0,
     isContactPersonAndStationNotEmpty: ({
       context: { currentStation, attendees },
@@ -214,7 +220,7 @@ export const stationAttendeeMachine = setup({
                   target: "#stationAttendee.failed",
                   actions: {
                     type: "setError",
-                    params: { errorType: "FETCH_CURRENT_STATION_FAILED" },
+                    params: { error: "FETCH_CURRENT_STATION_FAILED" },
                   },
                 },
               },
@@ -245,7 +251,7 @@ export const stationAttendeeMachine = setup({
                   target: "#stationAttendee.failed",
                   actions: {
                     type: "setError",
-                    params: { errorType: "FETCH_ATTENDEES_FAILED" },
+                    params: { error: "FETCH_ATTENDEES_FAILED" },
                   },
                 },
               },
@@ -264,7 +270,7 @@ export const stationAttendeeMachine = setup({
             target: "failed",
             actions: {
               type: "setError",
-              params: { errorType: "HOST_NOT_AT_STATION" },
+              params: { error: "HOST_NOT_AT_STATION" },
             },
           },
           { guard: "isNotRegisteredAtStation", target: "registering" },
@@ -272,7 +278,7 @@ export const stationAttendeeMachine = setup({
             target: "failed",
             actions: {
               type: "setError",
-              params: { errorType: "ALREADY_REGISTERED" },
+              params: { error: "ALREADY_REGISTERED" },
             },
           },
         ],
@@ -282,7 +288,7 @@ export const stationAttendeeMachine = setup({
             target: "failed",
             actions: {
               type: "setError",
-              params: { errorType: "HAS_GUESTS" },
+              params: { error: "HAS_GUESTS" },
             },
           },
           {
@@ -290,7 +296,7 @@ export const stationAttendeeMachine = setup({
             target: "failed",
             actions: {
               type: "setError",
-              params: { errorType: "STATION_NOT_EMPTY" },
+              params: { error: "STATION_NOT_EMPTY" },
             },
           },
           { guard: "isAlreadyRegistered", target: "unregistering" },
@@ -298,7 +304,7 @@ export const stationAttendeeMachine = setup({
             target: "failed",
             actions: {
               type: "setError",
-              params: { errorType: "NOT_REGISTERED" },
+              params: { error: "NOT_REGISTERED" },
             },
           },
         ],
@@ -335,7 +341,7 @@ export const stationAttendeeMachine = setup({
           actions: [
             {
               type: "setError",
-              params: { errorType: "WRITING_LOG_ENTRIES_FAILED" },
+              params: { error: "WRITING_LOG_ENTRIES_FAILED" },
             },
             { type: "abortTransaction" },
           ],
@@ -362,7 +368,7 @@ export const stationAttendeeMachine = setup({
           actions: {
             type: "setError",
             params: ({ event }) => ({
-              errorType:
+              error:
                 (event.error as { action: "DISARM" }).action === "DISARM"
                   ? "DISARM_ALARM_FAILED"
                   : "ARM_ALARM_FAILED",
@@ -382,7 +388,7 @@ export const stationAttendeeMachine = setup({
           target: "failed",
           actions: {
             type: "setError",
-            params: { errorType: "SEND_NOTIFICATIONS_FAILED" },
+            params: { error: "SEND_NOTIFICATIONS_FAILED" },
           },
         },
       },

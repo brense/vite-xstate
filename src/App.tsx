@@ -23,16 +23,18 @@ const ActorContext = createContext<Actor<typeof stationAttendeeMachine> | null>(
 
 function Component() {
   const actor = useContext(ActorContext);
-  const [isReady, setReady] = useState(false);
+  const [state, setState] = useState<unknown>("loading");
+  const [output, setOutput] = useState<unknown>();
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (actor) {
       const unsub = actor.subscribe((snapshot) => {
-        if (snapshot.value === "ready") {
-          setReady(true);
-        }
+        setState(snapshot.value);
         if (snapshot.status === "done") {
-          setReady(false);
+          console.log(snapshot);
+          setDone(true);
+          setOutput(snapshot.output);
         }
       });
       return () => unsub.unsubscribe();
@@ -40,21 +42,25 @@ function Component() {
   }, [actor]);
 
   const handleRegister = useCallback(() => {
+    setOutput(undefined);
     actor?.send({ type: "register" });
   }, [actor]);
 
   const handleUnregister = useCallback(() => {
+    setOutput(undefined);
     actor?.send({ type: "unregister" });
   }, [actor]);
 
   return (
     <>
-      <button disabled={!isReady} onClick={handleRegister}>
+      <button disabled={state !== "ready"} onClick={handleRegister}>
         register
       </button>
-      <button disabled={!isReady} onClick={handleUnregister}>
+      <button disabled={state !== "ready"} onClick={handleUnregister}>
         unregister
       </button>
+      {done && <hr />}
+      {done && <pre>{JSON.stringify(output, null, 2)}</pre>}
     </>
   );
 }
