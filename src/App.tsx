@@ -10,7 +10,11 @@ function App() {
   });
 
   const [state, send] = useMachine(stationAttendeeMachine, {
-    input: { userId: "me", stationId: "123" },
+    input: {
+      attendee: { userId: "me" },
+      executor: { userId: "me", executorType: "SELF" },
+      stationId: "123",
+    },
     inspect,
   });
 
