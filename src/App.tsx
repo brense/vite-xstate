@@ -80,7 +80,6 @@ function App() {
       e.preventDefault();
       const { attendeeUserId, stationId, executorType } = e.currentTarget
         .elements as unknown as Record<string, { value: string }>;
-      console.log(attendeeUserId.value, stationId.value, executorType.value);
       const actor = createActor(stationAttendeeMachine, {
         input: {
           attendee: {
