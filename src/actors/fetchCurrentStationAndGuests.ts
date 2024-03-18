@@ -1,6 +1,6 @@
 import { fromPromise } from "xstate";
 
-const users = {
+export const users = {
   "new-attendee": {
     currentStation: null,
     guests: []
@@ -14,7 +14,7 @@ const users = {
   },
   "contact-at-station": {
     currentStation: {
-      stationId: "station-with-contact-person",
+      stationId: "station-with-cpos",
       isContactPerson: true
     },
     guests: []

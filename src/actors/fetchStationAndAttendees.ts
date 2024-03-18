@@ -1,27 +1,30 @@
 import { fromPromise } from "xstate";
 import { Station } from "../types";
 
-const stations = {
+export const stations = {
   "empty-station": {
     stationId: "empty-station",
-    attendees: []
+    attendees: [],
   },
   "empty-station-with-alarm": {
     stationId: "empty-station-with-alarm",
     teasecSiteId: "ABC",
-    attendees: []
+    attendees: [],
+  },
+  "station-with-cpos": {
+    stationId: "station-with-cpos",
+    teasecSiteId: "123",
+    attendees: [{ userId: "contact-at-station" }],
   },
   "station-with-attendees": {
     stationId: "station-with-attendees",
-    teasecSiteId: "123",
-    attendees: [{ userId: "cpos" }, { userId: "someone" }]
+    teasecSiteId: "BBB",
+    attendees: [
+      { userId: "contact-at-station" },
+      { userId: "attendee-at-station" },
+    ],
   },
-  "station-with-contact-person": {
-    stationId: "station-with-contact-person",
-    teasecSiteId: "123",
-    attendees: [{ userId: "cpos" }]
-  }
-}
+};
 
 export const fetchStationAndAttendees = fromPromise<
   Station,
@@ -29,13 +32,15 @@ export const fetchStationAndAttendees = fromPromise<
 >(({ input: { stationId } }) => {
   return new Promise((resolve) => {
     console.log("fetching attendees for station", stationId);
-    const station = stations[stationId as keyof typeof stations]
+    const station = stations[stationId as keyof typeof stations];
     setTimeout(() => {
-      resolve(station || {
-        stationId,
-        teasecSiteId: "AAA",
-        attendees: [{ userId: "234" }],
-      });
+      resolve(
+        station || {
+          stationId,
+          teasecSiteId: "AAA",
+          attendees: [{ userId: "234" }],
+        }
+      );
     }, 500);
   });
 });
