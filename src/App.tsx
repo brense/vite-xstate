@@ -10,9 +10,9 @@ import { stationAttendeeMachine } from "./machines/stationAttendeeMachine";
 import { Actor, createActor } from "xstate";
 
 const input = {
-  attendee: { userId: "me" },
-  executor: { userId: "me", executorType: "SELF" as const },
-  stationId: "123",
+  attendee: { userId: "new-attendee" },
+  executor: { userId: "new-attendee", executorType: "SELF" as const },
+  stationId: "empty-station-with-alarm",
 };
 
 const { inspect } = createBrowserInspector();

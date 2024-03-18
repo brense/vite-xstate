@@ -1,5 +1,35 @@
 import { fromPromise } from "xstate";
 
+const users = {
+  "new-attendee": {
+    currentStation: null,
+    guests: []
+  },
+  "attendee-at-station": {
+    currentStation: {
+      stationId: "station-with-attendees",
+      isContactPerson: false
+    },
+    guests: []
+  },
+  "contact-at-station": {
+    currentStation: {
+      stationId: "station-with-contact-person",
+      isContactPerson: true
+    },
+    guests: []
+  },
+  "attendee-with-guests": {
+    currentStation: {
+      stationId: "station-with-attendees",
+      isContactPerson: false
+    },
+    guests: [
+      { name: "Some guest" }
+    ]
+  }
+}
+
 export const fetchCurrentStationAndGuests = fromPromise<
   {
     currentStation: { stationId: string; isContactPerson: boolean } | null;
@@ -9,8 +39,9 @@ export const fetchCurrentStationAndGuests = fromPromise<
 >(({ input: { userId } }) => {
   return new Promise((resolve) => {
     console.log("fetching current station and guests for", userId);
+    const user = users[userId as keyof typeof users]
     setTimeout(() => {
-      resolve({ currentStation: null, guests: [] });
+      resolve(user || { currentStation: null, guests: [] });
     }, 500);
   });
 });
