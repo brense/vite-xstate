@@ -1,5 +1,5 @@
 import { assign, setup } from "xstate";
-import { Attendee, ErrorStates, Executor } from "../types";
+import { Attendee, ErrorStates, ExecutedBy } from "../types";
 import { fetchCurrentStationAndGuests } from "../actors/fetchCurrentStationAndGuests";
 import { fetchStationAndAttendees } from "../actors/fetchStationAndAttendees";
 import { toggleAlarm } from "../actors/toggleAlarm";
@@ -17,7 +17,7 @@ export const stationAttendeeMachine = setup({
   types: {
     context: {} as {
       attendee: Attendee;
-      executor: Executor;
+      executedBy: ExecutedBy;
       stationId: string;
       teasecSiteId?: string;
       error: ErrorStates;
@@ -29,7 +29,7 @@ export const stationAttendeeMachine = setup({
     },
     input: {} as {
       attendee: Attendee;
-      executor: Executor;
+      executedBy: ExecutedBy;
       stationId: string;
     },
     output: {} as {
@@ -68,7 +68,7 @@ export const stationAttendeeMachine = setup({
       context: {
         stationId,
         currentStation,
-        executor: { executorType },
+        executedBy: { executorType },
       },
     }) =>
       executorType === "GUESTS_HOST" &&
@@ -78,10 +78,10 @@ export const stationAttendeeMachine = setup({
     hasErrors: ({ context: { error } }) => error !== "NONE",
   },
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5SwC4EMUEsD2A7AgiimLhGGAHQA22aEmuUAxBHpahu+lnocaeWq16jANoAGALqJQAB2yxMPXDJAAPRAGYA7ACYKAVl0A2bcYAcARmO7tAFl2WANCACeWg5sMmz5gJzaln4GDgYAvmEuHMp8JGSUNHQMzGAATqnYqRSyVBgAZpkAthTROAREcYKJIlAIDABu2ADGGGUSku2q8orKqhoIOvpGphbWtg7ObohWFOKBdprimnaWy+Z24ZEgpbwVAgnCyUxpGVk5+UUl3GWx+0JJjHW4jS3KopYdUl0KSmV9WnpvCMrDZ7I4XO4EJZtF5NJZdHZzIFLIiln4IlFrrt+PEKKkwHRXEx8VBMKg0p0kCBur88P8EOYdBQ-OZHDoDIFFjoIVoUczNItLAYDOIhXDjMYMdsseUcYJ8YTiWBSeTUu9pFSab0qf1GdpmazVtoOasltoeQg-AjDDZhbpxLZxDZ0VsdrLKpQFRAiSSycQ1boNXIftrQLqmSy2cbOWaLStxBRoXZxOYJdpzCm-BspW7brivUSAK64X2qynBnp-HXTCOG9kx7lTBAigwUFZGNlLSziIw5mV5+UE71MYul-3q76VunVhm1qMmrnmpvGcQJ4wGZ0I7R+CVwvutbEevFDosl5V+imBye0lQzvUG+cNpeQszGCjrVkOCyLczC-cxPZ8xPEczxVcdNCDakQyrMMa31SMjQXWMm3hbR9WMHd10WYwhSsf8bkAwcwLSI5yygqdb1gqENzfPw-G7YVtFFDD7Atej9GMZZRRTPQ0N-fDDzuMcSMYJgJ01aDpyooUJWZeiew5ZiAjsC0GNbaxlN0cwMzMIUBPdO4ACMwCabBCmSABhPB0CaFAAAU0lgPAxK+CSKPpe1AQlAJNH8OxjDsQK2MsSx30ZLMnQMELdF0fSB0oUdz1VUjXIrG96Rk2j5MYpTWKbXwKDWHwBV0HddE2TEDwM3FTMKcyiGSAAVVI0FwWA0FsspYBYNgKAabAAGsuCq+KKFq+qsEYZrWvazq8FgJ4Xiq9oyK1GD1EQBFNCGQKJWsDlSs0C1-DXaxVgFTQMJCOLCMocalEmqBprajrlG61hcEofqhquEbbrGsyJqalqXrmtrFuaZapHEtLQw2hAtp2-ycPXPQ-COlCnTsA1TCdTQNzsMwbrlO7AYe4GZterrjnSTJslyFAClSYpc3++6GqmkHZreiHXjaaHUvI9KZ0RwxdpRg70dUo1DF0uEkQC8RAuJo8UGwKAoCoMB8FyZmes+vrnkG4aAJJig1Y1rWdbQZneahz5ILWqT4cWGLDEje0WTQvLISzN8HV0XzlmNOxgnMFW7gtzXtd1woadOemLmZ37TdV9Xo+t23+r5vAVsFp3KJdgP3dZT2kTQlSm1-Lx03hLMAlrlEI9xXBsCwPJXCOD6vqNn7WbN1v287x5s-t1bJML-plmFCgfEZQOHERZ9EDo7GBXR9YV1WEwKulP6B7bzAO673rvpNgiD6H5I7beaGPmvOGp42Vs5+25YESRVSldCkwMy5TitLrmboIQeR9h4pFpmcBmTMWb9n+qA4+I8jY51wHnR2E96TTxfqYee78l5sQdLMSMO5uyXQcBELYrcyDwCpP3D0D91r9AALTGAtCw2Yq5OFcK4doYBBwHhQAYc7foDg2JeCtPGAw6N4SMl7K6OBZsCxCMnogbyiYER0VTH-UUFp8b6ARN2Qmop0acj4ceYiqRkjKIylpPwiZjRGAzCyN+BDQqhxCimVMopVh2DMcZWqllrKvQcqkJyhcC4ZWNHYnyMUQqWHWOmAwx0kSFXhJ4IUBighmMShYqxblhbSS0qFY0-hVhGEukiXQFp7A1zMNuYIZ18bh3kfvI87NHrPW5l1axItrD6niQ4gw6xxB+CVsk-UcJypwiMCsLJLTU6R3TlbWOPSqJFLfExTwX4RTlT8MdWSStCYxRsDoTQO4zEIPAasl29pWyjOhBYLSMVFhJKbFaNxIplJrFDrYMxtUchgGIBAa5U9WStm0r5CuG5PasMxr5CgMJA5zGsBmDYmgzF5DQJgLWwL8mPy0GCsKkL7DQpGbCyERg7HwjTPYH5hyKFhCAA */
+  /** @xstate-layout N4IgpgJg5mDOIC5SwC4EMUEsD2A7AgiimLhGGAHQA22aEmuUAxBHpahu+lnocaeWq16jANoAGALqJQAB2yxMPXDJAAPRAEZtAZgo6AnACYDANiMAWC0dPaDAGhABPRBe0UzADgDsp8bcNTHUsAXxDHDmU+EjJKGjoGKAoAMzAUAGMAC0SAYQBXACcCkhQAZW4cAlIAcTy4FFghBMYWNgoGADdsAGsuDErogTjhRJS0rNzC4twyit4autRG+JEoBE7sdP68CUld1XlFZVUNBABWbyMKM5tPcU8bn28DT0cXBCMdbwpNA1-ve6mM4WYKmbxhCJzAhEGKCFajVIZbKMfJFErlbZVCC1erLEYtMBFbAFCiyKgYZLEgC2FEiAxhQyaqzGSMmaJmGKiC1xTMS61wXS2yl2+yQIEOSkqJy0un0xjMlmstl+b0Qnk0FHE3k0IKM4h0nnVmiMZwhIDpvAZsV5jBZE0YnPp-FieOazFYuEoG16tKhg2t8NtiPtUEdlud5Fdq35gsxIqkBwUkrw0vOLw8Z2BJk0Zx09wMDmciFzBmu4isdyMvi1YLNFuhEeGbrtyNDfqtkZtzEJBWJpPJKEpBRp9f9cPxSWDrbDDdhcC7Mc2cakorkSeOYtO-1VCF+Z1L1k85nERgeOgsngMdfbjYoxToTiYxSgmFQhNX4vXUs3WmM308Rg5gBAIAqYPg7kYkEUKYfwGCBliXN4ubXpiY6UPeECPs+r7EAUoiaNIYoShuoBbsYeiaDB6oPJcTymDuAFnBQl7eOeFiZoxXwoVEHboWAD5PmAL5vnhRiEWuRzfqRv7eDumjnuImqaN4l7iOI8mmGBpjcU6c53vxmFMHkuDYSJH7EVJ6gyXJIJMSal5gjcx5BDp4Z6Rhj7GaZuH4eJn6SSmP67nBEEWOY0EwTBvgXJo6qubOjIeUZJlCTh75iYmAUqEFvynj8VGxRcp7eL4O6ZhYmrlhYzzAn86nguE5o3u5BmeSlwk+TofkWYF0nBXllEvIVtElfRRYIAY7EUKN6omup8lavFaH6R1hKJEw5lfr1VkfGctjQWcvwGDo5gWMd1U7jBpbPOpLyaepgFXo1o68StaUFOtvmZcm2V9Sa+1AkdJ2WOdsnjZ41j6Cafy+ECtgmEtr0AEZgOk2BUrkeDoOkKAAAqErAeAbQmRFbb9O3buNymAWWansfqPhWIjt5ealImfSTEk-am-0aoDBbA2d55g+8mZMWcVXPLYk3AjozN6WjVIY0QiQACoFGguCwGgOOVLArSeu0Ao9H0PG3orytYIw6ua9rut4LAi5CpU8bdWTqY5pYlUGP4e0gmBylyUaFBWKY1WnsCVj6vLjIW0oVtQDbWs68o+sel6xs+i95vo5basa8n9ta07y57AR30kRTNylmpPtw-76oi7+uYeABvyFQLOox9accq9bBd26nTA9n2ZIUtSvqoa9vcJ0ng96yXworpz-nczl1fe77YcnY3ckXJ4cqnuRYKQQjz3NYyKDYFAUBUIk+DksOBsZ10WcX9aV833fjAP2gw6Ly7Zebsso8yrKYEOvxPA6ECFAmwTddyMWgnNdiDxzCgW7oIT+t976PypMPIkJIx6DgntnPSWDv5QF-v-DYzsdhAIrpZU4kFfAQJeNArwoJ4HKWgfoKBXgLxWANBgyguBsBYGSE4da6cjav1NrpRkojxGSMYAAuhewV49XJlubQGpZp+CGnBAwe0IIQw1DmQqJo3CZlisIigijMASKkW0b0ci3IKLEQ45RawaGly+qTEBOVND3EPgqKwNg7AmMNJqO41gSqGhzNpc+U9bz2McQSAh-Zx7DknmbPSqSvGqNwK7Bh21tHyRCadJUETxpVgvB4IJJVDpRV+GERqoiyDwDFKQoYJStFaHuDuAAtF7E8nwTQmiCepe4pokm5MZIGKAvSPbGPGkETUZ0glgh8OqeqtiFktjZNMWYqFuRLCWUFPUFg96KWNOIXMhobDmC7rM+RAYJwHJRFMdEfpTkNC7Ocv6NxQoHkzCdHQwJfCGhOns95U5DnfJOdiRYfzFZkjSGAAFO0fCKTCiCACJ1Dogh0BBC4+hjQSweJeI8LkXluLec2OFDp36RkxUwvazEYqVnkmFLU8D2JXCJeWfFlwgQzMhMkvS+zGVtglUMKMiRWWIDzBVGisUTzcr8CVMqh1ppbMuEYqBwQLAwoZeMaczL5yoqoOixVCBsUh23viwGRLtWlnMBLNValDrllsR5W1ykdUlWqpRM4Dxyw2B3G4RSYFlWsTYuIF4vq2a4QVf4tef1Tx6CgUCKZth1JhwYieZi0N5KWDDtw2xKNFaYxmCnfGBRCbk00TzZ4FUghuAvJcfU5hLreAqmFHwJ9Yl7QauKuZ1pWarQ+owW1zDwFuDYTAzhZU8weGgUKz4Iqbi2JnvnW2Kc9b+p1HoG4lhzx-FlpmOSJUs1IXLICE0eZEljteZg6+2Cf64NnepA+Wp2KjTQeea9R5mJ3o7ZcCZYqmqyutPk1NXNK6nBuOLbllEDRhWNGNd4p5KLXBiYBHMx0aUvrpYIK16KID+o3rXLeDdA7jTzKGssPt9T6mqs+6D47BDJDQJga1lG02Ia0NRhNtGd70ewwWcBMF7i-AHYeVpIQgA */
   id: "stationAttendee",
-  context: ({ input: { executor, attendee, stationId } }) => ({
-    executor,
+  context: ({ input: { executedBy, attendee, stationId } }) => ({
+    executedBy,
     attendee,
     stationId,
     error: "NONE",

@@ -18,7 +18,7 @@ export type ErrorStates =
 
 export type ExecutorType = "SELF" | "GUESTS_HOST" | "OPERATOR";
 
-export type Executor = {
+export type ExecutedBy = {
   userId: string;
   executorType: ExecutorType;
 };

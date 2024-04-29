@@ -86,7 +86,7 @@ function App() {
             userId:
               executorType.value === "SELF" ? attendeeUserId.value : "guest",
           },
-          executor: {
+          executedBy: {
             userId: attendeeUserId.value,
             executorType: executorType.value as "SELF",
           },
